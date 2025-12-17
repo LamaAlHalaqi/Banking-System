@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Patterns in Banking System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-left: 4px solid #007bff;
+            padding-left: 10px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #007bff;
+            margin-top: 20px;
+        }
+        .pattern {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .pattern-name {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #007bff;
+        }
+        .pattern-type {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .code {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-left: 3px solid #007bff;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        ul, ol {
+            margin: 10px 0;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .benefits {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .benefits h4 {
+            margin-top: 0;
+            color: #155724;
+        }
+        .diagram {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px dashed #ccc;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Design Patterns in Advanced Banking System</h1>
+
+        <p>This document explains the design patterns implemented in the Advanced Banking System project. The system demonstrates the effective application of both behavioral and structural design patterns to handle core banking operations while maintaining flexibility, scalability, and maintainability.</p>
+
+        <h2>Structural Design Patterns</h2>
+
+        <div class="pattern">
+            <div class="pattern-name">Composite Pattern <span class="pattern-type">Structural</span></div>
+            <h3>Purpose</h3>
+            <p>Implement hierarchical account structure where individual accounts and account groups (e.g., family accounts, business accounts) can be treated uniformly.</p>
+
+            <h3>Implementation</h3>
+            <p>In the banking system, the Composite pattern is implemented through the Account model which can have parent-child relationships:</p>
+
+            <div class="code">
+                // In Account model<br>
+                // Parent account relationship<br>
+                public function parentAccount()<br>
+                {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;return $this->belongsTo(Account::class, 'parent_account_id');<br>
+                }<br><br>
+
+                // Child accounts relationship<br>
+                public function childAccounts()<br>
+                {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;return $this->hasMany(Account::class, 'parent_account_id');<br>
+                }
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Single interface for managing both leaf accounts and composite account groups</li>
+                    <li>Simplified client code that can treat individual and composite objects uniformly</li>
+                    <li>Easy to add new account types without changing existing code</li>
+                    <li>Flexible hierarchy management for complex account structures</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pattern">
+            <div class="pattern-name">Adapter Pattern <span class="pattern-type">Structural</span></div>
+            <h3>Purpose</h3>
+            <p>Integrate with external payment gateways or legacy banking systems by providing a unified interface for different payment processing systems.</p>
+
+            <h3>Implementation</h3>
+            <p>While not explicitly implemented in the current codebase, the Adapter pattern would be used in payment processing services:</p>
+
+            <div class="code">
+                // Interface for payment processors<br>
+                interface PaymentProcessorInterface {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function processPayment($amount, $details);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function refundPayment($transactionId);<br>
+                }<br><br>
+
+                // Adapter for Stripe payment gateway<br>
+                class StripeAdapter implements PaymentProcessorInterface {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;private $stripe;<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function __construct() {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->stripe = new StripeClient();<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function processPayment($amount, $details) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Adapt Stripe API calls to our interface<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->stripe->charges->create([<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'amount' => $amount * 100,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'currency' => 'usd',<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// ... other details<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Seamless integration with multiple payment gateways</li>
+                    <li>Easy switching between different payment providers</li>
+                    <li>Isolation of external API changes from core business logic</li>
+                    <li>Consistent interface regardless of underlying payment system</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pattern">
+            <div class="pattern-name">Decorator Pattern <span class="pattern-type">Structural</span></div>
+            <h3>Purpose</h3>
+            <p>Add optional features to accounts dynamically (e.g., overdraft protection, premium services, insurance) without modifying core account classes.</p>
+
+            <h3>Implementation</h3>
+            <p>The Decorator pattern can be implemented to add features to accounts:</p>
+
+            <div class="code">
+                // Base Account interface<br>
+                interface AccountInterface {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function getBalance();<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function deposit($amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function withdraw($amount);<br>
+                }<br><br>
+
+                // Concrete account implementation<br>
+                class BasicAccount implements AccountInterface {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;protected $balance = 0;<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function getBalance() {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->balance;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function deposit($amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->balance += $amount;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function withdraw($amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($this->balance >= $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->balance -= $amount;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return true;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Decorator base class<br>
+                abstract class AccountDecorator implements AccountInterface {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;protected $account;<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function __construct(AccountInterface $account) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->account = $account;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function getBalance() {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->account->getBalance();<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Overdraft protection decorator<br>
+                class OverdraftProtectionDecorator extends AccountDecorator {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;private $overdraftLimit;<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function __construct(AccountInterface $account, $overdraftLimit) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parent::__construct($account);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->overdraftLimit = $overdraftLimit;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function withdraw($amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$balance = $this->getBalance();<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($balance + $this->overdraftLimit >= $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Allow withdrawal with overdraft<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->account->withdraw(min($amount, $balance));<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Dynamic addition/removal of account features without modifying core classes</li>
+                    <li>Combinable decorators for complex feature sets</li>
+                    <li>Single responsibility principle adherence</li>
+                    <li>Runtime flexibility in feature composition</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pattern">
+            <div class="pattern-name">Facade Pattern <span class="pattern-type">Structural</span></div>
+            <h3>Purpose</h3>
+            <p>Provide a simplified interface to complex transaction processing subsystem.</p>
+
+            <h3>Implementation</h3>
+            <p>The Facade pattern is implemented through service classes that provide simplified interfaces:</p>
+
+            <div class="code">
+                // Transaction facade providing simplified interface<br>
+                class TransactionService {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;private $accountService;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;private $notificationService;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;private $validationService;<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function __construct(<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AccountService $accountService,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NotificationService $notificationService,<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ValidationService $validationService<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->accountService = $accountService;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->notificationService = $notificationService;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->validationService = $validationService;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function transfer($fromAccountId, $toAccountId, $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Complex logic encapsulated in simple method<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->validationService->validateTransfer($fromAccountId, $toAccountId, $amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$transaction = $this->accountService->transfer($fromAccountId, $toAccountId, $amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->notificationService->sendTransferNotification($transaction);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $transaction;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Simplified interface for clients while hiding complex internal operations</li>
+                    <li>Loose coupling between client code and subsystem components</li>
+                    <li>Easier testing through centralized access point</li>
+                    <li>Better layering and separation of concerns</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>Behavioral Design Patterns</h2>
+
+        <div class="pattern">
+            <div class="pattern-name">Observer Pattern <span class="pattern-type">Behavioral</span></div>
+            <h3>Purpose</h3>
+            <p>Implement real-time notification system for account activities.</p>
+
+            <h3>Implementation</h3>
+            <p>The Observer pattern is implemented through event listeners and notification services:</p>
+
+            <div class="code">
+                // Notification service acting as observer<br>
+                class NotificationService {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function sendAccountActivityNotification(Account $account, Transaction $transaction) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$message = "Your account {$account->account_number} has been {$transaction->type}ed with amount {$transaction->amount}.";<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$subject = "Account Activity: {$transaction->type}";<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Notify through multiple channels<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->sendNotification($account->user, Notification::CHANNEL_EMAIL, $message, $subject);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->sendNotification($account->user, Notification::CHANNEL_IN_APP, $message, $subject);<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// For large transactions, also send SMS<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($transaction->amount > 1000) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$smsMessage = "Large transaction alert: {$transaction->type} of {$transaction->amount} on account {$account->account_number}";<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->sendNotification($account->user, Notification::CHANNEL_SMS, $smsMessage);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Automatic notification updates when account events occur</li>
+                    <li>Multiple notification channels (email, SMS, in-app) support</li>
+                    <li>Decoupled notification logic from business operations</li>
+                    <li>Easy addition of new notification types</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pattern">
+            <div class="pattern-name">Strategy Pattern <span class="pattern-type">Behavioral</span></div>
+            <h3>Purpose</h3>
+            <p>Implement different interest calculation algorithms for various account types.</p>
+
+            <h3>Implementation</h3>
+            <p>The Strategy pattern is implemented through different interest calculation strategies:</p>
+
+            <div class="code">
+                // Interest calculation strategy interface<br>
+                interface InterestCalculationStrategy {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function calculateInterest(Account $account);<br>
+                }<br><br>
+
+                // Savings account interest strategy<br>
+                class SavingsInterestStrategy implements InterestCalculationStrategy {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function calculateInterest(Account $account) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Simple interest calculation for savings<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $account->balance * $account->interest_rate / 12;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Loan account interest strategy<br>
+                class LoanInterestStrategy implements InterestCalculationStrategy {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function calculateInterest(Account $account) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Compound interest calculation for loans<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $account->balance * $account->interest_rate / 365;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Investment account interest strategy<br>
+                class InvestmentInterestStrategy implements InterestCalculationStrategy {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function calculateInterest(Account $account) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Market-based calculation for investments<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $account->balance * $this->getMarketRate();<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;private function getMarketRate() {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Fetch current market rate<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 0.07; // Example rate<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Context class<br>
+                class InterestCalculator {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;private $strategy;<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function setStrategy(InterestCalculationStrategy $strategy) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->strategy = $strategy;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function calculate(Account $account) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->strategy->calculateInterest($account);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Runtime selection of interest calculation strategies based on account type</li>
+                    <li>Easily extensible for new account types and calculation methods</li>
+                    <li>Clean separation of different calculation algorithms</li>
+                    <li>Elimination of conditional statements in interest calculation</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pattern">
+            <div class="pattern-name">Chain of Responsibility Pattern <span class="pattern-type">Behavioral</span></div>
+            <h3>Purpose</h3>
+            <p>Implement transaction approval workflow where different transaction amounts require different approval levels.</p>
+
+            <h3>Implementation</h3>
+            <p>The Chain of Responsibility pattern is implemented for transaction approvals:</p>
+
+            <div class="code">
+                // Approval handler abstract class<br>
+                abstract class TransactionApprovalHandler {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;protected $nextHandler;<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function setNext(TransactionApprovalHandler $handler) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->nextHandler = $handler;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $handler;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function handle(Transaction $transaction) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($this->canApprove($transaction)) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->approve($transaction);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($this->nextHandler) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->nextHandler->handle($transaction);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw new Exception("No handler can approve this transaction");<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;abstract protected function canApprove(Transaction $transaction);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;abstract protected function approve(Transaction $transaction);<br>
+                }<br><br>
+
+                // Teller can approve small transactions<br>
+                class TellerApprovalHandler extends TransactionApprovalHandler {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;protected function canApprove(Transaction $transaction) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $transaction->amount <= 1000;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;protected function approve(Transaction $transaction) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Auto-approve small transactions<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$transaction->status = Transaction::STATUS_APPROVED;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$transaction->approved_by = 'Teller';<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $transaction;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Manager can approve medium transactions<br>
+                class ManagerApprovalHandler extends TransactionApprovalHandler {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;protected function canApprove(Transaction $transaction) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $transaction->amount <= 10000;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;protected function approve(Transaction $transaction) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Manual approval required<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$transaction->status = Transaction::STATUS_PENDING;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $transaction;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Admin can approve large transactions<br>
+                class AdminApprovalHandler extends TransactionApprovalHandler {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;protected function canApprove(Transaction $transaction) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return true; // Can approve any transaction<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;protected function approve(Transaction $transaction) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Special approval process<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$transaction->status = Transaction::STATUS_PENDING;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $transaction;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Usage<br>
+                $teller = new TellerApprovalHandler();<br>
+                $manager = new ManagerApprovalHandler();<br>
+                $admin = new AdminApprovalHandler();<br><br>
+
+                $teller->setNext($manager)->setNext($admin);<br><br>
+
+                // The chain will automatically route to the appropriate handler<br>
+                $approvedTransaction = $teller->handle($transaction);
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Flexible approval chain that can be modified at runtime</li>
+                    <li>Decoupling of senders and receivers of requests</li>
+                    <li>Easy addition of new approval levels</li>
+                    <li>Reduced coupling between approval logic and transaction processing</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pattern">
+            <div class="pattern-name">State Pattern <span class="pattern-type">Behavioral</span></div>
+            <h3>Purpose</h3>
+            <p>Manage account state transitions and state-specific behaviors.</p>
+
+            <h3>Implementation</h3>
+            <p>The State pattern is implemented through account states:</p>
+
+            <div class="code">
+                // Account state interface<br>
+                interface AccountState {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function deposit(Account $account, $amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function withdraw(Account $account, $amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function transfer(Account $account, $toAccount, $amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function getStateName();<br>
+                }<br><br>
+
+                // Active account state<br>
+                class ActiveState implements AccountState {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function deposit(Account $account, $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$account->balance += $amount;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return true;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function withdraw(Account $account, $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($account->balance >= $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$account->balance -= $amount;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return true;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function transfer(Account $account, $toAccount, $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($this->withdraw($account, $amount)) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$toAccount->deposit($amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return true;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function getStateName() {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 'Active';<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Frozen account state<br>
+                class FrozenState implements AccountState {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function deposit(Account $account, $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw new Exception("Cannot deposit to frozen account");<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function withdraw(Account $account, $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw new Exception("Cannot withdraw from frozen account");<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function transfer(Account $account, $toAccount, $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw new Exception("Cannot transfer from frozen account");<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function getStateName() {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return 'Frozen';<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }<br><br>
+
+                // Account context<br>
+                class Account {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;private $state;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public $balance = 0;<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function __construct() {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->state = new ActiveState();<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function setState(AccountState $state) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$this->state = $state;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function deposit($amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->state->deposit($this, $amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function withdraw($amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->state->withdraw($this, $amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function transfer($toAccount, $amount) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $this->state->transfer($this, $toAccount, $amount);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Clean handling of account states (active, frozen, suspended, closed)</li>
+                    <li>Elimination of state conditional logic in account methods</li>
+                    <li>Easy addition of new account states</li>
+                    <li>Better organization of state-specific behavior</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>Additional Design Patterns</h2>
+
+        <div class="pattern">
+            <div class="pattern-name">Repository Pattern <span class="pattern-type">Architectural</span></div>
+            <h3>Purpose</h3>
+            <p>Separate data access logic from business logic, providing a clean collection-like interface for accessing domain objects.</p>
+
+            <h3>Implementation</h3>
+            <p>The Repository pattern is implemented in the Repositories directory:</p>
+
+            <div class="code">
+                // Account repository<br>
+                class AccountRepository {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function getUserAccounts(User $user, int $perPage = 15): LengthAwarePaginator<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $user->accounts()->paginate($perPage);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function findById(int $id): ?Account<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return Account::find($id);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function findByAccountNumber(string $accountNumber): ?Account<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return Account::where('account_number', $accountNumber)->first();<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Decoupling of data access logic from business logic</li>
+                    <li>Centralized data access code for easier maintenance</li>
+                    <li>Improved testability through mock repositories</li>
+                    <li>Consistent data access interface across the application</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pattern">
+            <div class="pattern-name">Service Layer Pattern <span class="pattern-type">Architectural</span></div>
+            <h3>Purpose</h3>
+            <p>Define an application's boundary with a layer of services that establishes a set of available operations and coordinates the application's response in each operation.</p>
+
+            <h3>Implementation</h3>
+            <p>The Service Layer pattern is implemented in the Services directory:</p>
+
+            <div class="code">
+                // Account service<br>
+                class AccountService {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;public function createAccount(User $user, array $data): Account<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Business logic for account creation<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$accountNumber = $this->generateUniqueAccountNumber();<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$account = Account::create([...]);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return $account;<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;public function deposit(Account $account, float $amount, ?string $description = null): Transaction<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Business logic for deposit<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!$account->isActive()) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Validation logic<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br><br>
+
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return DB::transaction(function () use ($account, $amount, $description) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Transaction logic<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                }
+            </div>
+
+            <h3>Benefits</h3>
+            <div class="benefits">
+                <h4>Key Benefits:</h4>
+                <ul>
+                    <li>Clear separation between business logic and presentation/UI logic</li>
+                    <li>Reusable business logic across different parts of the application</li>
+                    <li>Easier testing of business logic in isolation</li>
+                    <li>Centralized business logic for consistent behavior</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p class="english-content">Advanced Banking System - Design Patterns Implementation</p>
+            <p class="arabic-content hidden">نظام البنوك المتقدم - تنفيذ أنماط التصميم</p>
+        </div>
+    </div>
+
+    <script>
+        function switchLanguage(lang) {
+            const englishContent = document.getElementsByClassName('english-content');
+            const arabicContent = document.getElementsByClassName('arabic-content');
+            const langButtons = document.getElementsByClassName('lang-btn');
+
+            // Update button states
+            for (let i = 0; i < langButtons.length; i++) {
+                langButtons[i].classList.remove('active');
+            }
+            event.target.classList.add('active');
+
+            if (lang === 'en') {
+                // Show English content
+                for (let i = 0; i < englishContent.length; i++) {
+                    englishContent[i].classList.remove('hidden');
+                }
+                for (let i = 0; i < arabicContent.length; i++) {
+                    arabicContent[i].classList.add('hidden');
+                }
+            } else {
+                // Show Arabic content
+                for (let i = 0; i < englishContent.length; i++) {
+                    englishContent[i].classList.add('hidden');
+                }
+                for (let i = 0; i < arabicContent.length; i++) {
+                    arabicContent[i].classList.remove('hidden');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
