@@ -78,6 +78,27 @@ class AccountService
             ]);
         }
 
+        // If below or equal threshold, process immediately
+        if ($amount <= Transaction::APPROVAL_THRESHOLD) {
+            return DB::transaction(function () use ($account, $amount, $description) {
+                $transaction = Transaction::create([
+                    'account_id' => $account->id,
+                    'amount' => $amount,
+                    'type' => Transaction::TYPE_DEPOSIT,
+                    'status' => Transaction::STATUS_COMPLETED,
+                    'description' => $description ?? 'Deposit',
+                    'reference' => uniqid(),
+                    'initiated_by' => $account->user_id,
+                    'approved_by' => $account->user_id, // auto-approved
+                ]);
+
+                // Apply balance immediately
+                $account->increment('balance', $amount);
+
+                return $transaction;
+            });
+        }
+
         // Create transaction record without updating balance immediately
         $transaction = Transaction::create([
             'account_id' => $account->id,
@@ -115,6 +136,27 @@ class AccountService
             throw ValidationException::withMessages([
                 'amount' => ['Insufficient funds.'],
             ]);
+        }
+
+        // If below or equal threshold, process immediately
+        if ($amount <= Transaction::APPROVAL_THRESHOLD) {
+            return DB::transaction(function () use ($account, $amount, $description) {
+                $transaction = Transaction::create([
+                    'account_id' => $account->id,
+                    'amount' => $amount,
+                    'type' => Transaction::TYPE_WITHDRAWAL,
+                    'status' => Transaction::STATUS_COMPLETED,
+                    'description' => $description ?? 'Withdrawal',
+                    'reference' => uniqid(),
+                    'initiated_by' => $account->user_id,
+                    'approved_by' => $account->user_id, // auto-approved
+                ]);
+
+                // Apply balance immediately
+                $account->decrement('balance', $amount);
+
+                return $transaction;
+            });
         }
 
         // Create transaction record without updating balance immediately
@@ -161,6 +203,29 @@ class AccountService
             throw ValidationException::withMessages([
                 'amount' => ['Insufficient funds.'],
             ]);
+        }
+
+        // If below or equal threshold, process immediately
+        if ($amount <= Transaction::APPROVAL_THRESHOLD) {
+            return DB::transaction(function () use ($fromAccount, $toAccount, $amount, $description) {
+                $transaction = Transaction::create([
+                    'account_id' => $fromAccount->id,
+                    'destination_account_id' => $toAccount->id,
+                    'amount' => $amount,
+                    'type' => Transaction::TYPE_TRANSFER,
+                    'status' => Transaction::STATUS_COMPLETED,
+                    'description' => $description ?? 'Transfer',
+                    'reference' => uniqid(),
+                    'initiated_by' => $fromAccount->user_id,
+                    'approved_by' => $fromAccount->user_id, // auto-approved
+                ]);
+
+                // Apply balances immediately
+                $fromAccount->decrement('balance', $amount);
+                $toAccount->increment('balance', $amount);
+
+                return $transaction;
+            });
         }
 
         // Create transaction record without updating balances immediately

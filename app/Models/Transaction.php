@@ -21,6 +21,19 @@ class Transaction extends Model
     const STATUS_REJECTED = 'rejected';
     const STATUS_COMPLETED = 'completed';
 
+    // Transactions strictly greater than this amount require admin/manager approval
+    const APPROVAL_THRESHOLD = 1000.00;
+
+    /**
+     * Whether this transaction requires approval.
+     *
+     * @return bool
+     */
+    public function requiresApproval(): bool
+    {
+        return $this->amount > self::APPROVAL_THRESHOLD;
+    }
+
     /**
      * The attributes that are mass assignable.
      *

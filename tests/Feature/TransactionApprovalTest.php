@@ -22,14 +22,14 @@ class TransactionApprovalTest extends TestCase
         // Create an account for the customer
         $account = Account::factory()->create([
             'user_id' => $customer->id,
-            'balance' => 1000,
+            'balance' => 5000,
         ]);
 
-        // Customer initiates a withdrawal
+        // Customer initiates a large withdrawal that requires approval
         $response = $this->actingAs($customer, 'sanctum')
             ->postJson("/api/accounts/{$account->id}/withdraw", [
-                'amount' => 100,
-                'description' => 'Test withdrawal'
+                'amount' => 1500,
+                'description' => 'Large withdrawal'
             ]);
 
         $response->assertStatus(200);
@@ -37,7 +37,7 @@ class TransactionApprovalTest extends TestCase
         // Check that transaction was created with pending status
         $this->assertDatabaseHas('transactions', [
             'account_id' => $account->id,
-            'amount' => 100,
+            'amount' => 1500,
             'type' => 'withdrawal',
             'status' => 'pending'
         ]);
@@ -52,7 +52,7 @@ class TransactionApprovalTest extends TestCase
         $response->assertStatus(403); // Forbidden
 
         // Balance should not have changed yet
-        $this->assertEquals(1000, $account->fresh()->balance);
+        $this->assertEquals(5000, $account->fresh()->balance);
     }
 
     /** @test */
@@ -65,14 +65,14 @@ class TransactionApprovalTest extends TestCase
         // Create an account for the customer
         $account = Account::factory()->create([
             'user_id' => $customer->id,
-            'balance' => 1000,
+            'balance' => 5000,
         ]);
 
-        // Customer initiates a withdrawal
+        // Customer initiates a withdrawal that requires approval
         $this->actingAs($customer, 'sanctum')
             ->postJson("/api/accounts/{$account->id}/withdraw", [
-                'amount' => 100,
-                'description' => 'Test withdrawal'
+                'amount' => 1500,
+                'description' => 'Large withdrawal'
             ]);
 
         // Get the transaction
@@ -92,7 +92,7 @@ class TransactionApprovalTest extends TestCase
         ]);
 
         // Balance should have been updated
-        $this->assertEquals(900, $account->fresh()->balance);
+        $this->assertEquals(3500, $account->fresh()->balance);
     }
 
     /** @test */
@@ -103,38 +103,39 @@ class TransactionApprovalTest extends TestCase
 
         $account = Account::factory()->create([
             'user_id' => $customer->id,
-            'balance' => 1000,
+            'balance' => 10000,
         ]);
 
-        // Create two pending transactions
+        // Create two pending transactions (both above threshold)
         $this->actingAs($customer, 'sanctum')
             ->postJson("/api/accounts/{$account->id}/withdraw", [
-                'amount' => 100,
+                'amount' => 1500,
                 'description' => 'First withdrawal'
             ]);
 
         $this->actingAs($customer, 'sanctum')
             ->postJson("/api/accounts/{$account->id}/deposit", [
-                'amount' => 50,
+                'amount' => 2000,
                 'description' => 'Deposit pending'
             ]);
 
         // Approve the first transaction to make sure it is not returned
-        $transaction = Transaction::first();
+        $transaction = Transaction::orderBy('created_at')->first();
         $this->actingAs($admin, 'sanctum')
             ->postJson("/api/admin/approve-transaction/{$transaction->id}");
 
-        // Admin lists pending transactions
+        // Admin lists pending transactions (only those > threshold)
         $response = $this->actingAs($admin, 'sanctum')
             ->getJson('/api/admin/transactions/pending');
 
         $response->assertStatus(200);
         $response->assertJsonStructure(['data', 'links', 'meta']);
 
-        // Only one pending transaction should be present
+        // Only one pending transaction should be present (the 2000 one)
         $this->assertCount(1, $response->json('data'));
         foreach ($response->json('data') as $t) {
             $this->assertEquals('pending', $t['status']);
+            $this->assertTrue($t['amount'] > 1000);
         }
     }
 
@@ -148,14 +149,14 @@ class TransactionApprovalTest extends TestCase
         // Create an account for the customer
         $account = Account::factory()->create([
             'user_id' => $customer->id,
-            'balance' => 1000,
+            'balance' => 5000,
         ]);
 
-        // Customer initiates a deposit
+        // Customer initiates a large deposit that requires approval
         $this->actingAs($customer, 'sanctum')
             ->postJson("/api/accounts/{$account->id}/deposit", [
-                'amount' => 200,
-                'description' => 'Test deposit'
+                'amount' => 1500,
+                'description' => 'Large deposit'
             ]);
 
         // Get the transaction
@@ -175,7 +176,7 @@ class TransactionApprovalTest extends TestCase
         ]);
 
         // Balance should have been updated
-        $this->assertEquals(1200, $account->fresh()->balance);
+        $this->assertEquals(6500, $account->fresh()->balance);
     }
 
     /** @test */
@@ -197,12 +198,12 @@ class TransactionApprovalTest extends TestCase
             'balance' => 500,
         ]);
 
-        // Customer initiates a transfer
+        // Customer initiates a transfer that requires approval
         $response = $this->actingAs($customer1, 'sanctum')
             ->postJson("/api/accounts/transfer", [
                 'from_account_id' => $account1->id,
                 'to_account_id' => $account2->id,
-                'amount' => 300,
+                'amount' => 1500,
                 'description' => 'Test transfer'
             ]);
 
@@ -219,4 +220,43 @@ class TransactionApprovalTest extends TestCase
         $this->assertEquals(700, $account1->fresh()->balance);
         $this->assertEquals(800, $account2->fresh()->balance);
     }
-}
+    /** @test */
+    public function small_transactions_are_processed_immediately()
+    {
+        $customer = User::factory()->create(['role' => 'customer']);
+
+        $account = Account::factory()->create([
+            'user_id' => $customer->id,
+            'balance' => 1000,
+        ]);
+
+        // Small deposit (<= threshold) should be completed immediately
+        $this->actingAs($customer, 'sanctum')
+            ->postJson("/api/accounts/{$account->id}/deposit", [
+                'amount' => 100,
+                'description' => 'Small deposit'
+            ])->assertStatus(200);
+
+        $this->assertDatabaseHas('transactions', [
+            'account_id' => $account->id,
+            'amount' => 100,
+            'status' => 'completed'
+        ]);
+
+        $this->assertEquals(1100, $account->fresh()->balance);
+
+        // Small withdrawal should be processed immediately
+        $this->actingAs($customer, 'sanctum')
+            ->postJson("/api/accounts/{$account->id}/withdraw", [
+                'amount' => 50,
+                'description' => 'Small withdrawal'
+            ])->assertStatus(200);
+
+        $this->assertDatabaseHas('transactions', [
+            'account_id' => $account->id,
+            'amount' => 50,
+            'status' => 'completed'
+        ]);
+
+        $this->assertEquals(1050, $account->fresh()->balance);
+    }}

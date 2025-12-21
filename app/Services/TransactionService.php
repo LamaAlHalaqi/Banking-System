@@ -60,6 +60,11 @@ class TransactionService
             throw new \InvalidArgumentException('Transaction is not pending approval.');
         }
 
+        // Ensure the transaction actually requires approval (greater than threshold)
+        if (!$transaction->requiresApproval()) {
+            throw new \InvalidArgumentException('Transaction does not require approval.');
+        }
+
         return DB::transaction(function () use ($transaction, $approvingUser) {
             // First, update transaction status to approved
             $transaction->update([
@@ -114,6 +119,11 @@ public function rejectTransaction(Transaction $transaction, User $rejectingUser)
 {
     if (!$transaction->isPending()) {
         throw new \InvalidArgumentException('Transaction is not pending approval.');
+    }
+
+    // Ensure the transaction actually requires approval
+    if (!$transaction->requiresApproval()) {
+        throw new \InvalidArgumentException('Transaction does not require approval.');
     }
 
     return DB::transaction(function () use ($transaction, $rejectingUser) {

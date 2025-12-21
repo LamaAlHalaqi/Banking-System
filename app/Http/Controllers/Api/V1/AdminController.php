@@ -66,6 +66,7 @@ class AdminController extends Controller
     {
         $perPage = (int) $request->query('per_page', 15);
         $transactions = Transaction::pending()
+            ->where('amount', '>', Transaction::APPROVAL_THRESHOLD)
             ->with(['account.user', 'initiatedBy'])
             ->orderBy('created_at', 'asc')
             ->paginate($perPage);

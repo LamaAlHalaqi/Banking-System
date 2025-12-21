@@ -55,8 +55,8 @@ class TransactionPolicy
      */
     public function approve(User $user, Transaction $transaction): bool
     {
-        // Only admins and managers can approve transactions
-        return $user->isAdmin() || $user->isManager();
+        // Only admins and managers can approve transactions and only if the transaction requires approval
+        return ($user->isAdmin() || $user->isManager()) && $transaction->requiresApproval();
     }
 
     /**
@@ -64,7 +64,7 @@ class TransactionPolicy
      */
     public function reject(User $user, Transaction $transaction): bool
     {
-        // Only admins and managers can reject transactions
-        return $user->isAdmin() || $user->isManager();
+        // Only admins and managers can reject transactions and only if the transaction requires approval
+        return ($user->isAdmin() || $user->isManager()) && $transaction->requiresApproval();
     }
 }
