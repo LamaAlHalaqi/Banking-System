@@ -34,7 +34,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/accounts/transfer', [AccountController::class, 'transfer']);
 
     // Transaction routes
-   // Route::apiResource('transactions', TransactionController::class)->except(['store', 'update', 'destroy']);
+    Route::apiResource('transactions', TransactionController::class)->except(['store', 'update', 'destroy']);
 
     // Customer routes
     Route::get('/customer/profile', [CustomerController::class, 'profile']);
@@ -43,7 +43,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Admin routes
    Route::middleware(['role:admin'])->group(function () {
 
-     Route::apiResource('transactions', TransactionController::class)->except(['store', 'update', 'destroy']);
+    // Route::apiResource('transactions', TransactionController::class)->except(['store', 'update', 'destroy']);
 
     // Dashboard
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard']);
