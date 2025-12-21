@@ -53,6 +53,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/admin/reports/account-summaries', [AdminController::class, 'accountSummariesReport']);
     Route::get('/admin/reports/audit-logs', [AdminController::class, 'auditLogsReport']);
 
+    // Pending transactions listing
+    Route::get('/admin/transactions/pending', [AdminController::class, 'pendingTransactions']);
+
     // Manager dashboard
   //  Route::get('/admin/manager-dashboard', [AdminController::class, 'managerDashboard']);
 

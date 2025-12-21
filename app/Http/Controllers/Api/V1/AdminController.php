@@ -58,6 +58,22 @@ class AdminController extends Controller
     }
 
     /**
+     * List pending transactions for admins.
+     *
+     * Supports pagination via ?per_page=
+     */
+    public function pendingTransactions(Request $request)
+    {
+        $perPage = (int) $request->query('per_page', 15);
+        $transactions = Transaction::pending()
+            ->with(['account.user', 'initiatedBy'])
+            ->orderBy('created_at', 'asc')
+            ->paginate($perPage);
+
+        return TransactionResource::collection($transactions);
+    }
+
+    /**
      * Approve a transaction.
      *
      * @param Request $request

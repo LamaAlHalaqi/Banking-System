@@ -96,6 +96,49 @@ class TransactionApprovalTest extends TestCase
     }
 
     /** @test */
+    public function admin_can_list_pending_transactions()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $customer = User::factory()->create(['role' => 'customer']);
+
+        $account = Account::factory()->create([
+            'user_id' => $customer->id,
+            'balance' => 1000,
+        ]);
+
+        // Create two pending transactions
+        $this->actingAs($customer, 'sanctum')
+            ->postJson("/api/accounts/{$account->id}/withdraw", [
+                'amount' => 100,
+                'description' => 'First withdrawal'
+            ]);
+
+        $this->actingAs($customer, 'sanctum')
+            ->postJson("/api/accounts/{$account->id}/deposit", [
+                'amount' => 50,
+                'description' => 'Deposit pending'
+            ]);
+
+        // Approve the first transaction to make sure it is not returned
+        $transaction = Transaction::first();
+        $this->actingAs($admin, 'sanctum')
+            ->postJson("/api/admin/approve-transaction/{$transaction->id}");
+
+        // Admin lists pending transactions
+        $response = $this->actingAs($admin, 'sanctum')
+            ->getJson('/api/admin/transactions/pending');
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure(['data', 'links', 'meta']);
+
+        // Only one pending transaction should be present
+        $this->assertCount(1, $response->json('data'));
+        foreach ($response->json('data') as $t) {
+            $this->assertEquals('pending', $t['status']);
+        }
+    }
+
+    /** @test */
     public function manager_can_approve_pending_transaction()
     {
         // Create a customer and manager
