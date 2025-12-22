@@ -96,10 +96,25 @@
             border-top: 1px solid #eee;
             color: #666;
         }
+
+        /* Language switch helpers */
+        .hidden { display: none; }
+        .lang-btn { margin: 0 6px; padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+        .lang-btn.active { background: #007bff; color: #fff; border-color: #007bff; }
+        body.lang-ar { direction: rtl; }
+        body.lang-ar .container { text-align: right; }
+        /* Ensure code blocks stay LTR inside Arabic view */
+        .arabic-content .code { direction: ltr; text-align: left; unicode-bidi: embed; }
     </style>
 </head>
 <body>
     <div class="container">
+        <div style="text-align:center;margin-bottom:10px;">
+            <button class="lang-btn active" onclick="switchLanguage('en', this)">English</button>
+            <button class="lang-btn" onclick="switchLanguage('ar', this)">العربية</button>
+        </div>
+
+        <div class="english-content">
         <h1>Design Patterns in Advanced Banking System</h1>
 
         <p>This document explains the design patterns implemented in the Advanced Banking System project. The system demonstrates the effective application of both behavioral and structural design patterns to handle core banking operations while maintaining flexibility, scalability, and maintainability.</p>
@@ -714,6 +729,218 @@
             </div>
         </div>
 
+        </div> <!-- /.english-content -->
+
+        <div class="arabic-content hidden">
+            <h1>أنماط التصميم في نظام البنوك المتقدم</h1>
+
+            <p>يوضح هذا المستند أنماط التصميم المستخدمة في مشروع نظام البنوك المتقدم. تُظهر المنظومة تطبيق أنماط بنيوية وسلوكية بطريقة تحافظ على المرونة والقابلية للتوسع وسهولة الصيانة.</p>
+
+            <h2>أنماط التصميم البنيوية</h2>
+
+            <div class="pattern">
+                <div class="pattern-name">نمط المركب <span class="pattern-type">بنيوي</span></div>
+                <h3>الغرض</h3>
+                <p>بناء هيكل هرمي للحسابات بحيث يمكن التعامل مع الحسابات الفردية ومجموعات الحسابات بنفس الواجهة.</p>
+                <h3>التطبيق</h3>
+                <p>يُطبق عبر علاقات الحسابات الأب/الأبناء في نموذج الحساب.</p>
+
+                <div class="code">
+                    // In Account model
+                    // Parent account relationship
+                    public function parentAccount()
+                    {
+                        return $this->belongsTo(Account::class, 'parent_account_id');
+                    }
+
+                    // Child accounts relationship
+                    public function childAccounts()
+                    {
+                        return $this->hasMany(Account::class, 'parent_account_id');
+                    }
+                </div>
+
+                <h3>الفوائد</h3>
+                <div class="benefits">
+                    <h4>الفوائد الرئيسية:</h4>
+                    <ul>
+                        <li>واجهة موحدة لإدارة الحسابات الفردية والجماعية</li>
+                        <li>تبسيط الكود الذي يتعامل مع الشجرة الهرمية</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-name">نمط المحول <span class="pattern-type">بنيوي</span></div>
+                <h3>الغرض</h3>
+                <p>ربط بوابات دفع خارجية أو أنظمة قديمة عبر واجهة موحدة.</p>
+                <h3>ملاحظة</h3>
+                <p class="code">مثال الكود كما في النسخة الإنجليزية أعلاه</p>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-name">نمط المزيّن <span class="pattern-type">بنيوي</span></div>
+                <h3>الغرض</h3>
+                <p>إضافة ميزات اختيارية للحسابات (مثل حماية السحب) دون تعديل الكلاس الأساسي.</p>
+                <h3>ملاحظة</h3>
+                <p class="code">مثال الكود كما في النسخة الإنجليزية أعلاه</p>
+            </div>
+
+            <h2>أنماط التصميم السلوكية</h2>
+
+            <div class="pattern">
+                <div class="pattern-name">نمط المراقب <span class="pattern-type">سلوكي</span></div>
+                <h3>الغرض</h3>
+                <p>تنفيذ نظام إشعارات فوري عند حدوث أنشطة على الحساب.</p>
+                <div class="code">
+                    // Notification service acting as observer
+                    class NotificationService {
+                        public function sendAccountActivityNotification(Account $account, Transaction $transaction) {
+                            $message = "Your account {$account->account_number} has been {$transaction->type}ed with amount {$transaction->amount}.";
+                            $subject = "Account Activity: {$transaction->type}";
+
+                            // Notify through multiple channels
+                            $this->sendNotification($account->user, Notification::CHANNEL_EMAIL, $message, $subject);
+                            $this->sendNotification($account->user, Notification::CHANNEL_IN_APP, $message, $subject);
+
+                            // For large transactions, also send SMS
+                            if ($transaction->amount > 1000) {
+                                $smsMessage = "Large transaction alert: {$transaction->type} of {$transaction->amount} on account {$account->account_number}";
+                                $this->sendNotification($account->user, Notification::CHANNEL_SMS, $smsMessage);
+                            }
+                        }
+                    }
+                </div>
+
+            <div class="pattern">
+                <div class="pattern-name">نمط الإستراتيجية <span class="pattern-type">سلوكي</span></div>
+                <h3>الغرض</h3>
+                <p>فصل خوارزميات حساب الفائدة لكل نوع حساب عن بعضها، واختيارها وقت التشغيل.</p>
+                <div class="code">
+                    // Interest calculation strategy interface
+                    interface InterestCalculationStrategy {
+                        public function calculateInterest(Account $account);
+                    }
+
+                    class SavingsInterestStrategy implements InterestCalculationStrategy {
+                        public function calculateInterest(Account $account) {
+                            return $account->balance * $account->interest_rate / 12;
+                        }
+                    }
+
+                    class LoanInterestStrategy implements InterestCalculationStrategy {
+                        public function calculateInterest(Account $account) {
+                            return $account->balance * $account->interest_rate / 365;
+                        }
+                    }
+
+                    class InterestCalculator {
+                        private $strategy;
+
+                        public function setStrategy(InterestCalculationStrategy $strategy) {
+                            $this->strategy = $strategy;
+                        }
+
+                        public function calculate(Account $account) {
+                            return $this->strategy->calculateInterest($account);
+                        }
+                    }
+                </div>
+
+            <div class="pattern">
+                <div class="pattern-name">نمط سلسلة المسؤولية <span class="pattern-type">سلوكي</span></div>
+                <h3>الغرض</h3>
+                <p>سلسلة موافقات مرنة تعتمد مستوى المعاملة (مثلاً: تيلر - مدير - أدمن).</p>
+                <div class="code">
+                    abstract class TransactionApprovalHandler {
+                        protected $nextHandler;
+
+                        public function setNext(TransactionApprovalHandler $handler) {
+                            $this->nextHandler = $handler;
+                            return $handler;
+                        }
+
+                        public function handle(Transaction $transaction) {
+                            if ($this->canApprove($transaction)) {
+                                return $this->approve($transaction);
+                            }
+
+                            if ($this->nextHandler) {
+                                return $this->nextHandler->handle($transaction);
+                            }
+
+                            throw new Exception("No handler can approve this transaction");
+                        }
+
+                        abstract protected function canApprove(Transaction $transaction);
+                        abstract protected function approve(Transaction $transaction);
+                    }
+
+                    // Handlers simplified
+                    class TellerApprovalHandler extends TransactionApprovalHandler {
+                        protected function canApprove(Transaction $transaction) {
+                            return $transaction->amount <= 1000;
+                        }
+                        protected function approve(Transaction $transaction) {
+                            $transaction->status = Transaction::STATUS_APPROVED;
+                            $transaction->approved_by = 'Teller';
+                            return $transaction;
+                        }
+                    }
+                </div>
+
+            <h2>أنماط إضافية</h2>
+            <div class="pattern">
+                <div class="pattern-name">نمط المستودع <span class="pattern-type">هيكلي</span></div>
+                <p>عزل منطق الوصول للبيانات عن منطق الأعمال لواجهة واضحة وقابلة للاختبار.</p>
+                <div class="code">
+                    class AccountRepository {
+                        public function getUserAccounts(User $user, int $perPage = 15): LengthAwarePaginator
+                        {
+                            return $user->accounts()->paginate($perPage);
+                        }
+
+                        public function findById(int $id): ?Account
+                        {
+                            return Account::find($id);
+                        }
+
+                        public function findByAccountNumber(string $accountNumber): ?Account
+                        {
+                            return Account::where('account_number', $accountNumber)->first();
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="pattern">
+                <div class="pattern-name">نمط طبقة الخدمة <span class="pattern-type">معماري</span></div>
+                <p>طبقة تُعرّف حدود التطبيق عبر خدمات تُنسّق العمليات التجارية.</p>
+                <div class="code">
+                    class AccountService {
+                        public function createAccount(User $user, array $data): Account
+                        {
+                            // Business logic for account creation
+                            $accountNumber = $this->generateUniqueAccountNumber();
+                            $account = Account::create([...]);
+                            return $account;
+                        }
+
+                        public function deposit(Account $account, float $amount, ?string $description = null): Transaction
+                        {
+                            // Business logic for deposit
+                            if (!$account->isActive()) {
+                                // Validation logic
+                            }
+
+                            return DB::transaction(function () use ($account, $amount, $description) {
+                                // Transaction logic
+                            });
+                        }
+                    }
+                </div>
+        </div> <!-- /.arabic-content -->
+
         <div class="footer">
             <p class="english-content">Advanced Banking System - Design Patterns Implementation</p>
             <p class="arabic-content hidden">نظام البنوك المتقدم - تنفيذ أنماط التصميم</p>
@@ -721,33 +948,19 @@
     </div>
 
     <script>
-        function switchLanguage(lang) {
-            const englishContent = document.getElementsByClassName('english-content');
-            const arabicContent = document.getElementsByClassName('arabic-content');
-            const langButtons = document.getElementsByClassName('lang-btn');
+        function switchLanguage(lang, btn) {
+            // update button visual state
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
 
-            // Update button states
-            for (let i = 0; i < langButtons.length; i++) {
-                langButtons[i].classList.remove('active');
-            }
-            event.target.classList.add('active');
-
-            if (lang === 'en') {
-                // Show English content
-                for (let i = 0; i < englishContent.length; i++) {
-                    englishContent[i].classList.remove('hidden');
-                }
-                for (let i = 0; i < arabicContent.length; i++) {
-                    arabicContent[i].classList.add('hidden');
-                }
+            if (lang === 'ar') {
+                document.body.classList.add('lang-ar');
+                document.querySelectorAll('.arabic-content').forEach(e => e.classList.remove('hidden'));
+                document.querySelectorAll('.english-content').forEach(e => e.classList.add('hidden'));
             } else {
-                // Show Arabic content
-                for (let i = 0; i < englishContent.length; i++) {
-                    englishContent[i].classList.add('hidden');
-                }
-                for (let i = 0; i < arabicContent.length; i++) {
-                    arabicContent[i].classList.remove('hidden');
-                }
+                document.body.classList.remove('lang-ar');
+                document.querySelectorAll('.arabic-content').forEach(e => e.classList.add('hidden'));
+                document.querySelectorAll('.english-content').forEach(e => e.classList.remove('hidden'));
             }
         }
     </script>

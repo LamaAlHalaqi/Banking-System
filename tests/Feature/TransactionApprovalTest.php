@@ -155,7 +155,7 @@ class TransactionApprovalTest extends TestCase
         // Customer initiates a large deposit that requires approval
         $this->actingAs($customer, 'sanctum')
             ->postJson("/api/accounts/{$account->id}/deposit", [
-                'amount' => 1500,
+                'amount' => 750,
                 'description' => 'Large deposit'
             ]);
 
@@ -176,7 +176,7 @@ class TransactionApprovalTest extends TestCase
         ]);
 
         // Balance should have been updated
-        $this->assertEquals(6500, $account->fresh()->balance);
+        $this->assertEquals(5750, $account->fresh()->balance);
     }
 
     /** @test */
@@ -220,6 +220,7 @@ class TransactionApprovalTest extends TestCase
         $this->assertEquals(700, $account1->fresh()->balance);
         $this->assertEquals(800, $account2->fresh()->balance);
     }
+
     /** @test */
     public function small_transactions_are_processed_immediately()
     {
@@ -233,8 +234,23 @@ class TransactionApprovalTest extends TestCase
         // Small deposit (<= threshold) should be completed immediately
         $this->actingAs($customer, 'sanctum')
             ->postJson("/api/accounts/{$account->id}/deposit", [
-                'amount' => 100,
+                'amount' => 500,
                 'description' => 'Small deposit'
+            ])->assertStatus(200);
+
+        $this->assertDatabaseHas('transactions', [
+            'account_id' => $account->id,
+            'amount' => 500,
+            'status' => 'completed'
+        ]);
+
+        $this->assertEquals(1500, $account->fresh()->balance);
+
+        // Small withdrawal should be processed immediately
+        $this->actingAs($customer, 'sanctum')
+            ->postJson("/api/accounts/{$account->id}/withdraw", [
+                'amount' => 100,
+                'description' => 'Small withdrawal'
             ])->assertStatus(200);
 
         $this->assertDatabaseHas('transactions', [
@@ -243,20 +259,6 @@ class TransactionApprovalTest extends TestCase
             'status' => 'completed'
         ]);
 
-        $this->assertEquals(1100, $account->fresh()->balance);
-
-        // Small withdrawal should be processed immediately
-        $this->actingAs($customer, 'sanctum')
-            ->postJson("/api/accounts/{$account->id}/withdraw", [
-                'amount' => 50,
-                'description' => 'Small withdrawal'
-            ])->assertStatus(200);
-
-        $this->assertDatabaseHas('transactions', [
-            'account_id' => $account->id,
-            'amount' => 50,
-            'status' => 'completed'
-        ]);
-
-        $this->assertEquals(1050, $account->fresh()->balance);
-    }}
+        $this->assertEquals(1400, $account->fresh()->balance);
+    }
+}

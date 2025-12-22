@@ -21,17 +21,28 @@ class Transaction extends Model
     const STATUS_REJECTED = 'rejected';
     const STATUS_COMPLETED = 'completed';
 
-    // Transactions strictly greater than this amount require admin/manager approval
-    const APPROVAL_THRESHOLD = 1000.00;
+    // Thresholds for approval
+    const MANAGER_APPROVAL_THRESHOLD = 500.00;
+    const ADMIN_APPROVAL_THRESHOLD = 1000.00;
 
     /**
-     * Whether this transaction requires approval.
+     * Whether this transaction requires approval by a manager.
      *
      * @return bool
      */
-    public function requiresApproval(): bool
+    public function requiresManagerApproval(): bool
     {
-        return $this->amount > self::APPROVAL_THRESHOLD;
+        return $this->amount > self::MANAGER_APPROVAL_THRESHOLD;
+    }
+
+    /**
+     * Whether this transaction requires approval by an admin.
+     *
+     * @return bool
+     */
+    public function requiresAdminApproval(): bool
+    {
+        return $this->amount > self::ADMIN_APPROVAL_THRESHOLD;
     }
 
     /**

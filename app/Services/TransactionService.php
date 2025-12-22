@@ -60,9 +60,17 @@ class TransactionService
             throw new \InvalidArgumentException('Transaction is not pending approval.');
         }
 
-        // Ensure the transaction actually requires approval (greater than threshold)
-        if (!$transaction->requiresApproval()) {
-            throw new \InvalidArgumentException('Transaction does not require approval.');
+        // Ensure the transaction actually requires approval
+        if ($approvingUser->isAdmin()) {
+            if (!$transaction->requiresAdminApproval()) {
+                throw new \InvalidArgumentException('Transaction does not require admin approval.');
+            }
+        } else if ($approvingUser->isManager()) {
+            if (!$transaction->requiresManagerApproval()) {
+                throw new \InvalidArgumentException('Transaction does not require manager approval.');
+            }
+        } else {
+            throw new \InvalidArgumentException('User is not authorized to approve transactions.');
         }
 
         return DB::transaction(function () use ($transaction, $approvingUser) {
@@ -122,8 +130,16 @@ public function rejectTransaction(Transaction $transaction, User $rejectingUser)
     }
 
     // Ensure the transaction actually requires approval
-    if (!$transaction->requiresApproval()) {
-        throw new \InvalidArgumentException('Transaction does not require approval.');
+    if ($rejectingUser->isAdmin()) {
+        if (!$transaction->requiresAdminApproval()) {
+            throw new \InvalidArgumentException('Transaction does not require admin approval.');
+        }
+    } else if ($rejectingUser->isManager()) {
+        if (!$transaction->requiresManagerApproval()) {
+            throw new \InvalidArgumentException('Transaction does not require manager approval.');
+        }
+    } else {
+        throw new \InvalidArgumentException('User is not authorized to reject transactions.');
     }
 
     return DB::transaction(function () use ($transaction, $rejectingUser) {

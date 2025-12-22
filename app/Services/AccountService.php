@@ -30,6 +30,7 @@ class AccountService
             'interest_rate' => $data['interest_rate'] ?? 0,
             'overdraft_limit' => $data['overdraft_limit'] ?? 0,
             'state' => Account::STATE_ACTIVE,
+             'parent_account_id' => $data['parent_account_id'] ?? null,
         ]);
 
         // If initial deposit was provided, create a transaction
@@ -78,8 +79,8 @@ class AccountService
             ]);
         }
 
-        // If below or equal threshold, process immediately
-        if ($amount <= Transaction::APPROVAL_THRESHOLD) {
+        // If below or equal to 500, process immediately
+        if ($amount <= Transaction::MANAGER_APPROVAL_THRESHOLD) {
             return DB::transaction(function () use ($account, $amount, $description) {
                 $transaction = Transaction::create([
                     'account_id' => $account->id,
@@ -138,8 +139,8 @@ class AccountService
             ]);
         }
 
-        // If below or equal threshold, process immediately
-        if ($amount <= Transaction::APPROVAL_THRESHOLD) {
+        // If below or equal to 500, process immediately
+        if ($amount <= Transaction::MANAGER_APPROVAL_THRESHOLD) {
             return DB::transaction(function () use ($account, $amount, $description) {
                 $transaction = Transaction::create([
                     'account_id' => $account->id,
@@ -205,8 +206,8 @@ class AccountService
             ]);
         }
 
-        // If below or equal threshold, process immediately
-        if ($amount <= Transaction::APPROVAL_THRESHOLD) {
+        // If below or equal to 500, process immediately
+        if ($amount <= Transaction::MANAGER_APPROVAL_THRESHOLD) {
             return DB::transaction(function () use ($fromAccount, $toAccount, $amount, $description) {
                 $transaction = Transaction::create([
                     'account_id' => $fromAccount->id,

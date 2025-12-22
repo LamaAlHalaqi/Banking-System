@@ -7,6 +7,7 @@ use App\Services\TransactionService;
 use App\Http\Resources\TransactionResource;
 use App\Http\Resources\AccountResource;
 use App\Models\Transaction;
+use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -58,6 +59,22 @@ class AdminController extends Controller
     }
 
     /**
+     * List all user accounts for admin.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function listAllAccounts(Request $request)
+    {
+        $perPage = (int) $request->query('per_page', 15);
+        $accounts = Account::with('user')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+        return AccountResource::collection($accounts);
+    }
+
+    /**
      * List pending transactions for admins.
      *
      * Supports pagination via ?per_page=
@@ -66,7 +83,7 @@ class AdminController extends Controller
     {
         $perPage = (int) $request->query('per_page', 15);
         $transactions = Transaction::pending()
-            ->where('amount', '>', Transaction::APPROVAL_THRESHOLD)
+            ->where('amount', '>', Transaction::ADMIN_APPROVAL_THRESHOLD)
             ->with(['account.user', 'initiatedBy'])
             ->orderBy('created_at', 'asc')
             ->paginate($perPage);
@@ -153,5 +170,34 @@ class AdminController extends Controller
         return response()->json([
             'transactions' => TransactionResource::collection($recentTransactions),
         ]);
+    }
+
+    /**
+     * Change account state (suspend / freeze / unfreeze) — admin only
+     *
+     * POST /admin/accounts/{account}/state
+     * body: { state: 'suspended' }
+     */
+    public function changeAccountState(Request $request, \App\Models\Account $account)
+    {
+        $this->authorize('update', $account);
+
+        $validated = $request->validate([
+            'state' => ['required', 'string', 'in:'.implode(',', [\App\Models\Account::STATE_ACTIVE, \App\Models\Account::STATE_FROZEN, \App\Models\Account::STATE_SUSPENDED])],
+        ]);
+
+        try {
+            $action = new \App\Actions\Account\ChangeAccountState($account, $validated['state'], $request->user());
+            $result = $action->execute();
+
+            return response()->json([
+                'message' => 'Account state updated',
+                'account' => $result,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Unable to change account state'], 500);
+        }
     }
 }

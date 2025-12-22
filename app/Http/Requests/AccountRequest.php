@@ -26,6 +26,7 @@ class AccountRequest extends FormRequest
             'initial_deposit' => 'nullable|numeric|min:0',
             'interest_rate' => 'nullable|numeric|min:0|max:1',
             'overdraft_limit' => 'nullable|numeric|min:0',
+             'parent_account_id' => 'nullable|exists:accounts,id',
         ];
     }
 }
